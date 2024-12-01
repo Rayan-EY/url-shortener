@@ -1,0 +1,94 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        
+        <!-- URL Shorten Form -->
+        <form id="shortenForm">
+            <label for="originalUrl">Original URL:</label>
+            <input type="url" id="originalUrl" required>
+            <button type="submit">Shorten</button>
+        </form>
+
+        <!-- Shortened URL Display -->
+        <h2>Shortened URL</h2>
+        <input type="text" id="shortUrl" readonly>
+        <button class="copy-btn" onclick="copyShortUrl()">Copy</button>
+
+        <!-- Stats Form -->
+        <h2>Stats</h2>
+        <form id="statsForm">
+            <label for="shortCode">Short Code:</label>
+            <input type="text" id="shortCode" required>
+            <button type="submit">Get Stats</button>
+        </form>
+        <p id="statsOutput"></p>
+        
+        <!-- Error Message -->
+        <p class="error" id="errorMessage"></p>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:3000";
+
+        // Shorten URL
+        document.getElementById("shortenForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const originalUrl = document.getElementById("originalUrl").value;
+            try {
+                const response = await fetch(`${API_BASE}/shorten`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ originalUrl }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("shortUrl").value = data.shortUrl;
+                    document.getElementById("errorMessage").textContent = "";
+                } else {
+                    alert(data.error || "Failed to shorten URL");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to shorten URL");
+            }
+        });
+
+        // Copy Short URL
+        function copyShortUrl() {
+            const shortUrl = document.getElementById("shortUrl").value;
+            if (!shortUrl) {
+                alert("No short URL to copy");
+                return;
+            }
+            navigator.clipboard.writeText(shortUrl)
+                .then(() => alert("Short URL copied!"))
+                .catch((err) => console.error("Failed to copy:", err));
+        }
+
+        // Fetch Stats
+        document.getElementById("statsForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const shortCode = document.getElementById("shortCode").value;
+            try {
+                const response = await fetch(`${API_BASE}/${shortCode}/stats`);
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById("statsOutput").textContent = 
+                        `Short Code: ${data.shortCode}, Clicks: ${data.clicks}`;
+                    document.getElementById("errorMessage").textContent = "";
+                } else {
+                    alert(data.error || "Failed to fetch stats");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to fetch stats");
+            }
+        });
+    </script>
+</body>
